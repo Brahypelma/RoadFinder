@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon" href="#">
+    <style>
+        #map {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+        #open-help {
+          position: fixed;
+          bottom: 15px;
+          left: 15px;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: #fff;
+          border:2px solid #333;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 24px;
+          font-weight: weight;
+        }
+        #help {
+          display: none;
+          position: fixed;
+          width: 500px;
+          height: 500px;
+          background: #fff;
+          padding:15px;
+          border: 5px solid #333;
+          top:50%;margin-top: -250px;
+          left: 50%;margin-left: -250px;
+        }
+        #help .close {
+          position: absolute;
+          top:5px;
+          right:5px;
+          font-size: 16px;
+          font-weight: bold;
+          background: none;
+          border: none;
+        }
+        .hidden-div{
+          position: absolute;
+          width: 300px;
+          //height: 70px;
+          background-color: #fff;
+          border-radius: 10px
+          left: 300px;
+          bottom: 100px;
+          z-index: 999;
+          padding:10px 20px;
+          display: none;
+        }
+    </style>
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+
+
+
+</head>
+<body>
+  <div class="hidden-div">
+    <p>Flag Mode On</p>
+  </div>
+<div id="map"></div>
+<button id='open-help'>?</button>
+<div id="help">
+    <p>A few steps 'how to do':</p>
+    <p>1 : If you want to create start point
+    and last point of straight road - just 'click' on left mouse button in the
+    location you want</p>
+    <p> 2: If you want to create a segment of 'turning away road' then you
+    must ,for start segment point set a marker then press "Ctrl"(you will see notification 'Flag mode On')
+    Then just set flags on the turning road and for last point of turning segment just set a marker again
+    (Just press 'Ctrl' to switch to marker mode again).</p>
+    <p>If you have made a mistake with placing markers Just press "Backspace" button and script will delete last
+    position. </p>
+
+    <p>3.When you have entered all points you want - press 'Right Mouse Button' to send this data
+    to server for handling(YOU MUST REMEMBER THAT YOU CAN SEND FOR SINGLE REQUEST NOT MORE THEN 100 POINTS)
+  </p>
+       <button class='close'>X</button>
+</div>
+
+
+<script>
+    $('#open-help').click(function () {
+      $('#help').fadeIn();
+    });
+    $('#help .close').click(function () {
+      $('#help').fadeOut();
+    })
+
+    var coordinates = [];
+
+    var keydown = false;
+    var keys = [];
+    var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+    var markers = [];
+    var snapped;
+    var resp =[];
+
+
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 27.85, lng: -82.95},
+            zoom: 8
+        });
+
+
+
+
+        google.maps.event.addDomListener(document, 'keydown', function (e) {
+            var code = (e.keyCode ? e.keyCode : e.which);
+            if(code ==8) {
+              markers[markers.length-1].setMap(null)
+              markers.pop()
+              coordinates.pop();
+              keys.pop();
+              console.log(coordinates);
+
+            }
+            if (code === 17) {
+                if (keydown == false) {
+                    keydown = true;
+                    console.log("ctrl is pressed! ")
+                    $('.hidden-div').fadeIn(300);
+                }
+
+                else {
+                    keydown = false;
+                    console.log('ctrl is unpressed! ')
+                    $('.hidden-div').fadeOut(300);
+                }
+            }
+
+        });
+
+    google.maps.event.addListener(map, 'click', function(event) {
+    addMarker(event.latLng, map);
+    coordinates.push(event.latLng);
+    keys.push(keydown);
+
+ });
+
+
+  function addMarker(location, map) {
+  if(keydown ==true) {
+  var marker = new google.maps.Marker({
+    position: location,
+    icon:image,
+    map: map
+  });
+  markers.push(marker);
+
+}
+  else if (keydown==false) {
+    var marker = new google.maps.Marker({
+      position: location,
+      map: map
+    });
+    markers.push(marker);
+  }
+}
+
+  google.maps.event.addListener(map,'rightclick' ,function() {
+    var elements = [];
+    for(i = 0; i < coordinates.length; i++) {
+      var point ={
+        point:coordinates[i],
+        key:keys[i]
+      }
+      elements.push(point);
+    }
+
+    $.ajax({
+      type: "POST",
+      contentType: "application/json",
+      dataType: "json",
+      data: JSON.stringify({elements:elements}),
+      url: 'http://127.0.0.1:5000/server.py',
+      success: function (response) {
+        resp = response;
+        console.log("Connection established successfully.");
+        console.log(resp);
+
+
+        //markers.forEach(function(mark){
+        //mark.setMap(null);
+        //});
+        var snapped = window.open('http://127.0.0.1:5000/snapped','_blank',false);
+      }
+    });
+
+  });
+
+  }
+
+
+
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB53OXIGukuWxj8-PBp-PdNlkeMWR2YBeU&callback=initMap"
+        async defer>
+</script>
+</body>
+</html>

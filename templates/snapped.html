@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="shortcut icon" href="#">
+    <style>
+        #map {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+        #open-help {
+          position: fixed;
+          bottom: 15px;
+          left: 15px;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: #fff;
+          border:2px solid #333;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 24px;
+          font-weight: weight;
+        }
+        #help {
+          display: none;
+          position: fixed;
+          width: 500px;
+          height: 500px;
+          background: #fff;
+          padding:15px;
+          border: 5px solid #333;
+          top:50%;margin-top: -250px;
+          left: 50%;margin-left: -250px;
+        }
+        #help .close {
+          position: absolute;
+          top:5px;
+          right:5px;
+          font-size: 16px;
+          font-weight: bold;
+          background: none;
+          border: none;
+        }
+
+        </style>
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+
+
+    <div id="map"></div>
+    <button id='open-help'>?</button>
+    <div id="help">
+        <p>In this window just check if the data from input(previous window) correctly handled in this window
+        (Check if all of markers placed on the middle point of nearest road)</p>
+        <p>So if we have correct handled data then press "Enter" to push it to csv file.
+          After u have pressed 'Enter' you can close new window and continue to set point.
+          But You need to put last point between previous and next segment by your hands.
+          Just copy last point of the next segment and past to empty cell in previous
+          Output file you can find in script folder.Just rename it and save to place you want. </p>
+           <button class='close'>X</button>
+    </div>
+    <script>
+    $('#open-help').click(function () {
+      $('#help').fadeIn();
+    });
+    $('#help .close').click(function () {
+      $('#help').fadeOut();
+    })
+
+      var response = window.opener.resp;
+      console.log(response);
+      function initMap() {
+        // Create a map object and specify the DOM element for display.
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: response[0],
+          zoom: 14
+        });
+        response.forEach(function(point){
+              new google.maps.Marker({
+                position: point,
+                map:map
+              });
+            });
+        google.maps.event.addDomListener(document, 'keydown', function (e) {
+            var code = (e.keyCode ? e.keyCode : e.which);
+            if (code === 13) {
+            $.ajax({
+              type: "POST",
+              contentType: "application/json",
+              dataType: "json",
+              data: JSON.stringify({'it is ok':'it is ok'}),
+              url: 'http://127.0.0.1:5000/server.py',
+              complete: function (response) {
+                window.opener.coordinates = []
+                window.opener.keys = []
+                resp = response;
+                alert('Data has sent to hadling.')
+                }
+               });
+              }
+             });
+            }
+   </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB53OXIGukuWxj8-PBp-PdNlkeMWR2YBeU&callback=initMap"
+    async defer></script>
+  </body>
+</html>

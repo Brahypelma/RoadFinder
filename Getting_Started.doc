@@ -1,0 +1,10 @@
+﻿Requirements:
+1.Python 3.6
+2.Installed flask framework
+3.Google Chrome
+
+Few steps to beginning:
+1.Start python server .If you dont have flask ,please, install it.
+2.Lets open localhost with port 5000. You will see a google map. 
+
+
